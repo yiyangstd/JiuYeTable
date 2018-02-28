@@ -1,14 +1,11 @@
 import sqlite3
 
 
-class TableDao:
+class UserDao:
 
-    def __init__(self):
-        self.conn = sqlite3.connect('JiuYe.db')
+    def __init__(self, conn):
+        self.conn = conn
 
-    def __del__(self):
-        if self.conn:
-            self.conn.close()
 
     #输入用户名，密码，判断是否合法
     def find_user(self, name, password):
@@ -33,7 +30,8 @@ class TableDao:
 
 
 def main():
-    dao = TableDao()
+    conn = sqlite3.connect('JiuYe.db')
+    dao = UserDao(conn)
     print(dao.find_user('admin', '3104794'))
 
 
