@@ -12,12 +12,12 @@ class UserDao:
             cursor.execute("INSERT INTO user(name, password, role) values('admin', '3104794', 'admin')")
             self.conn.commit()
 
-
-    #新增用户
+    # 新增用户
     def add_user(self, name, password, role):
         cursor = self.conn.cursor()
         try:
-            cursor.execute("INSERT INTO user(name, password, role) values('" + name + "','" + password + "','" + role + "')")
+            cursor.execute(
+                "INSERT INTO user(name, password, role) values('" + name + "','" + password + "','" + role + "')")
             self.conn.commit()
             return True
         except Exception as e:
@@ -27,7 +27,7 @@ class UserDao:
         finally:
             cursor.close()
 
-    #删除用户
+    # 删除用户
     def delete_user(self, name):
         cursor = self.conn.cursor()
         try:
@@ -41,8 +41,7 @@ class UserDao:
         finally:
             cursor.close()
 
-
-    #输入用户名，密码，判断是否合法
+    # 输入用户名，密码，判断是否合法
     def find_user(self, name, password):
         cursor = self.conn.cursor()
         cursor.execute("SELECT name, role FROM user WHERE name=\'" + name + "\' and password=\'" + password + "\';")
