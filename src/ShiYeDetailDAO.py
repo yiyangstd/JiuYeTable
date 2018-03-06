@@ -64,7 +64,7 @@ class ShiYeDetailDao():
             cursor.close()
 
     # 更新一个人员数据
-    def update_person_by_id(self, id, name = None, sex = None, month = None, canbaoTime = None, fafangTime = None,
+    def update_person_by_id(self, id, newId, name = None, sex = None, month = None, canbaoTime = None, fafangTime = None,
                shiye = None, yiliao = None, shengyu = None, shangzhang = None, total = None, cunse = None,
                zhanghao = None, beizhu = None, item = None, endTime = None):
         cursor = self.conn.cursor()
@@ -99,7 +99,7 @@ class ShiYeDetailDao():
             updateSQL = updateSQL + "item='" + item + "',"
         if endTime is not None:
             updateSQL = updateSQL + "endTime='" + item + "',"
-        updateSQL = updateSQL + "id = '" + id + "' "
+        updateSQL = updateSQL + "id = '" + newId + "' "
         updateSQL = updateSQL + "WHERE id ='" + id + "'"
         try:
             cursor.execute(updateSQL)

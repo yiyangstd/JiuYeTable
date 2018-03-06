@@ -1,10 +1,13 @@
 import sys
+import logging
 import sqlite3
 from UserDao import UserDao
+from ShiYeDetailDAO import ShiYeDetailDao
 from PyQt5.QtWidgets import (QFileDialog, QWidget, QDialog, QGridLayout, QPushButton, QLabel, QLineEdit, QDesktopWidget, QMessageBox, QApplication, QTableView, QAbstractItemView)
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from ExcelParser import ExcelParser
+from role import Role
 
 class MainUI(QWidget):
 
@@ -12,7 +15,9 @@ class MainUI(QWidget):
         super().__init__()
         self.userDao = userDao
         self.user = None
+        self.data = None
         self.showLoginBox()
+        print(self.user)
         # if self.user:
         self.initUI()
 
@@ -40,33 +45,47 @@ class MainUI(QWidget):
 
         self.headers = ['姓名', '性别', '身份证', '享受月数', '参保时间', '开始发放时间',
                  '失业', '医疗', '生育', '丧葬', '合计', '村社', '账号', '银行']
-        # datas=[('数据1', '数据2', '数据3', '数据4', '数据5', '数据6', '数据7', '数据8', '数据9', '数据10'),
-        #         ('数据1', '数据2', '数据3', '数据4', '数据5', '数据6', '数据7', '数据8', '数据9', '数据10'),
-        #         ('数据1', '数据2', '数据3', '数据4', '数据5', '数据6', '数据7', '数据8', '数据9', '数据10'),
-        #         ('数据1', '数据2', '数据3', '数据4', '数据5', '数据6', '数据7', '数据8', '数据9', '数据10'),
-        #         ('数据1', '数据2', '数据3', '数据4', '数据5', '数据6', '数据7', '数据8', '数据9', '数据10'),
-        #         ('数据1', '数据2', '数据3', '数据4', '数据5', '数据6', '数据7', '数据8', '数据9', '数据10'),
-        #         ('数据1', '数据2', '数据3', '数据4', '数据5', '数据6', '数据7', '数据8', '数据9', '数据10'),
-        #         ('数据1', '数据2', '数据3', '数据4', '数据5', '数据6', '数据7', '数据8', '数据9', '数据10',)]
         datas = []
         self.tableView = QTableView()
         self.tableView.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.tableMode = self.buildTable(self.headers, datas)
         self.tableView.setModel(self.tableMode)
-        grid.addWidget(self.tableView, 1, 0)
+        grid.addWidget(self.tableView, 1, 0, 6, 1)
+
+        self.insertButton = QPushButton("存储")
+        self.insertButton.setDisabled(True)
+        self.insertButton.clicked.connect(self.insertData)
+        grid.addWidget(self.insertButton, 1, 3, 1, 2)
+
+        self.queryButton = QPushButton("查询")
+        self.queryButton.clicked.connect(self.insertData)
+        grid.addWidget(self.queryButton, 2, 3, 1, 2)
+
+        self.outputButton = QPushButton("导出")
+
+        grid.addWidget(self.outputButton, 3, 3, 1, 2)
+
+        self.zhichuButton = QPushButton("本月支出")
+        grid.addWidget(self.zhichuButton, 4, 3, 1, 2)
+
+        self.userButton = QPushButton("用户管理")
+        if self.user and self.user['role'] == Role.ADMIN.value:
+            self.userButton.setEnabled(True)
+        else:
+            self.userButton.setDisabled(True)
+        grid.addWidget(self.userButton, 5, 3, 1, 2)
 
         self.show()
 
     def buildTable(self, headers, datas):
-        print(len(headers), len(datas))
-        model = QStandardItemModel(len(headers), len(datas))
+        model = QStandardItemModel()
         model.setHorizontalHeaderLabels(headers)
         for xindex, row in enumerate(datas):
             for yindex, column in enumerate(headers):
-                print(xindex, yindex)
                 item = QStandardItem(str(datas[xindex][yindex]))
                 model.setItem(xindex, yindex, item)
 
+        print(model.columnCount())
         return model
 
     def center(self):
@@ -86,9 +105,25 @@ class MainUI(QWidget):
 
     def uploadFile(self):
         parser = ExcelParser()
-        data = parser.computData(self.filePathText.text())
-        print(data)
+        try:
+            data = parser.computData(self.filePathText.text())
+            self.data = data
+        except Exception as e:
+            QMessageBox.information(self, "错误", "导入的文件格式错误，请根据模板检查并修改后重新导入")
+            self.insertButton.setEnabled(False)
+            return
         self.tableView.setModel(self.buildTable(self.headers, data))
+        self.insertButton.setEnabled(True)
+
+    def insertData(self):
+        for row in self.data:
+            try:
+                print('todo')
+            except Exception as e:
+                print(e)
+
+        self.insertButton.setDisabled(True)
+        print("insert")
 
 
 
