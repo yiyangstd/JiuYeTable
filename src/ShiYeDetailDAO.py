@@ -37,8 +37,8 @@ class ShiYeDetailDao():
                 "INSERT INTO shiye_detail"
                 "(name, sex, id, month, canbaoTime, fafangTime, shiye, yiliao, shengyu, "
                 "shangzhang, total, cunse, zhanghao, beizhu, item, endTime) "
-                "VALUES('" + name + "','" + sex + "','" + id + "'," + str(month) + ",'" + canbaoTime + "','" +
-                fafangTime + "','" + str(shiye) + "','" + str(yiliao) + "','" + str(shengyu) + "','" + str(shangzhang) + "','" + str(total) + "','" +
+                "VALUES('" + str(name) + "','" + str(sex) + "','" + id + "'," + str(month) + ",'" + str(canbaoTime) + "','" +
+                str(fafangTime) + "','" + str(shiye) + "','" + str(yiliao) + "','" + str(shengyu) + "','" + str(shangzhang) + "','" + str(total) + "','" +
                 cunse + "','" + zhanghao + "','" + beizhu + "','" + item + "','" + endTime + "')")
             self.conn.commit()
             return True
@@ -76,9 +76,9 @@ class ShiYeDetailDao():
         if month is not None:
             updateSQL = updateSQL + "month=" + str(month) + ","
         if canbaoTime is not None:
-            updateSQL = updateSQL + "canbaoTime='" + canbaoTime + "',"
+            updateSQL = updateSQL + "canbaoTime='" + str(canbaoTime) + "',"
         if fafangTime is not None:
-            updateSQL = updateSQL + "fafangTime='" + fafangTime + "',"
+            updateSQL = updateSQL + "fafangTime='" + str(fafangTime) + "',"
         if shiye is not None:
             updateSQL = updateSQL + "shiye=" + str(shiye) + ","
         if yiliao is not None:

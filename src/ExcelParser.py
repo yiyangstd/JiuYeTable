@@ -9,10 +9,12 @@ class ExcelParser():
         self.yiliao = 359.1
         self.shengyu = 4.42
         self.shangzhang = 1.66
+        self.item = None
 
     def parserFile(self, filePath):
         file = xlrd.open_workbook(filePath)
         table = file.sheet_by_index(0)
+        self.item = table.cell(0, 0).value
         startRow = 4
         data = []
         while table.cell(startRow, 0).value:
@@ -55,6 +57,7 @@ class ExcelParser():
             data.append(month)
             data.append(person['canbaotime'])
             data.append(self.computStartTime(person['canbaotime']))
+            data.append(self.computeEndTime(self.computStartTime(person['canbaotime']), month))
             data.append(round(self.shiye * month, 2))
             data.append(round(self.yiliao * month, 2))
             data.append(round(self.shengyu * month, 2))
@@ -84,7 +87,15 @@ class ExcelParser():
             return str(int(canbao_year) + 1) + '.' + '1'
         return canbao_year + '.' + str(int(canbao_month) + 1)
 
+    def computeEndTime(self, startTime, month):
+        start_year = str(startTime)[:4]
+        start_month = str(startTime)[5:]
+        end_year = int(start_year) + (int(start_month) + int(month) - 1) // 12
+        end_month = (int(start_month) + int(month) - 1) % 12
+        return str(end_year) + '.' + str(end_month)
+
 
 if __name__ == '__main__':
     parser = ExcelParser()
-    parser.computData("d://通滩人民医院、消防站失业保险人员名单 2018 .xlsx")
+    # parser.computData("d://通滩人民医院、消防站失业保险人员名单 2018 .xlsx")
+    print(parser.computeEndTime('2017.04', 24))

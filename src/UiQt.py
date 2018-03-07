@@ -5,17 +5,20 @@ from UserDao import UserDao
 from ShiYeDetailDAO import ShiYeDetailDao
 from PyQt5.QtWidgets import (QFileDialog, QWidget, QDialog, QGridLayout, QPushButton, QLabel, QLineEdit, QDesktopWidget, QMessageBox, QApplication, QTableView, QAbstractItemView)
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QStandardItemModel, QStandardItem
+from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon
 from ExcelParser import ExcelParser
+from ExcelSaver import ExcelSaver
 from role import Role
 
 class MainUI(QWidget):
 
-    def __init__(self, userDao):
+    def __init__(self, userDao, shiYeDetailDao):
         super().__init__()
         self.userDao = userDao
+        self.shiYeDetailDao = shiYeDetailDao
         self.user = None
         self.data = None
+        self.item = None
         self.showLoginBox()
         print(self.user)
         # if self.user:
@@ -28,10 +31,12 @@ class MainUI(QWidget):
         self.user = loginBox.user
 
     def initUI(self):
+        self.setWindowTitle('江阳区就业局失业金发放工具（测试版1.0）')
+        self.setWindowIcon(QIcon('icon.jpg'))
         self.setGeometry(200, 200, 1000, 800)
         self.center()
-        grid = QGridLayout()
-        self.setLayout(grid)
+        self.grid = QGridLayout()
+        self.setLayout(self.grid)
         self.filePathText = QLineEdit("")
         self.openButton = QPushButton("打开")
         self.uploadButton = QPushButton("上传")
@@ -39,41 +44,42 @@ class MainUI(QWidget):
         self.uploadButton.clicked.connect(self.uploadFile)
         self.filePathText.setDisabled(True)
         self.uploadButton.setDisabled(True)
-        grid.addWidget(self.filePathText, 0, 0)
-        grid.addWidget(self.openButton, 0, 3)
-        grid.addWidget(self.uploadButton, 0, 4)
+        self.grid.addWidget(self.filePathText, 0, 0)
+        self.grid.addWidget(self.openButton, 0, 3)
+        self.grid.addWidget(self.uploadButton, 0, 4)
 
-        self.headers = ['姓名', '性别', '身份证', '享受月数', '参保时间', '开始发放时间',
-                 '失业', '医疗', '生育', '丧葬', '合计', '村社', '账号', '银行']
+        self.headers = ['姓名', '性别', '身份证', '享受月数', '参保时间', '开始发放时间', '结束时间',
+                        '失业', '医疗', '生育', '丧葬', '合计', '村社', '账号', '银行']
         datas = []
         self.tableView = QTableView()
         self.tableView.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.tableMode = self.buildTable(self.headers, datas)
         self.tableView.setModel(self.tableMode)
-        grid.addWidget(self.tableView, 1, 0, 6, 1)
+        self.grid.addWidget(self.tableView, 1, 0, 6, 1)
 
         self.insertButton = QPushButton("存储")
         self.insertButton.setDisabled(True)
         self.insertButton.clicked.connect(self.insertData)
-        grid.addWidget(self.insertButton, 1, 3, 1, 2)
+        self.grid.addWidget(self.insertButton, 1, 3, 1, 2)
 
         self.queryButton = QPushButton("查询")
-        self.queryButton.clicked.connect(self.insertData)
-        grid.addWidget(self.queryButton, 2, 3, 1, 2)
+        self.queryButton.clicked.connect(self.queryData)
+        self.grid.addWidget(self.queryButton, 2, 3, 1, 2)
 
         self.outputButton = QPushButton("导出")
-
-        grid.addWidget(self.outputButton, 3, 3, 1, 2)
+        self.outputButton.clicked.connect(self.outputFile)
+        self.grid.addWidget(self.outputButton, 3, 3, 1, 2)
 
         self.zhichuButton = QPushButton("本月支出")
-        grid.addWidget(self.zhichuButton, 4, 3, 1, 2)
+        self.zhichuButton.clicked.connect(self.expend)
+        self.grid.addWidget(self.zhichuButton, 4, 3, 1, 2)
 
         self.userButton = QPushButton("用户管理")
         if self.user and self.user['role'] == Role.ADMIN.value:
             self.userButton.setEnabled(True)
         else:
             self.userButton.setDisabled(True)
-        grid.addWidget(self.userButton, 5, 3, 1, 2)
+        self.grid.addWidget(self.userButton, 5, 3, 1, 2)
 
         self.show()
 
@@ -107,6 +113,7 @@ class MainUI(QWidget):
         parser = ExcelParser()
         try:
             data = parser.computData(self.filePathText.text())
+            self.item = parser.item
             self.data = data
         except Exception as e:
             QMessageBox.information(self, "错误", "导入的文件格式错误，请根据模板检查并修改后重新导入")
@@ -116,18 +123,67 @@ class MainUI(QWidget):
         self.insertButton.setEnabled(True)
 
     def insertData(self):
+        self.insertButton.setDisabled(True)
+        failData = []
+        successData = []
         for row in self.data:
-            try:
-                print('todo')
-            except Exception as e:
-                print(e)
+            if self.shiYeDetailDao.add_person(row[0], row[1], row[2], row[3], row[4],
+                                          row[5], row[6], row[7], row[8], row[9],
+                                          row[10], row[11], row[12], row[13], row[14],
+                                          self.item):
+                successData.append(row[0])
+            else:
+                failData.append(row[0])
 
         self.insertButton.setDisabled(True)
-        print("insert")
+        if failData:
+            info = ''
+            for data in failData:
+                info = info + data + ','
+            QMessageBox.information(self, '存储完成', info + '存储失败，请检查')
+        else:
+            QMessageBox.information(self, '存储完成', '存储完成')
 
+    def queryData(self):
+        all_data = self.shiYeDetailDao.find_persons()
+        if not all_data:
+            return
+        headers = ['姓名', '性别', '身份证', '享受月数', '参保时间', '开始发放时间', '结束时间',
+                   '失业', '医疗', '生育', '丧葬', '合计', '村社', '账号', '银行', '项目']
+        tableDatas = []
+        for data in all_data:
+            tableData = [data['name'], data['sex'], data['id'], data['month'], data['canbaoTime'],
+                         data['fafangTime'], data['endTime'], data['shiye'], data['yiliao'],
+                         data['shengyu'], data['shangzhang'], data['total'], data['cunse'], data['zhanghao'],
+                         data['beizhu'], data['item']]
+            tableDatas.append(tableData)
 
+        tableMode = self.buildTable(headers, tableDatas)
+        self.tableView.setModel(tableMode)
 
+    def outputFile(self):
+        all_data = self.shiYeDetailDao.find_persons()
+        if not all_data:
+            QMessageBox.information(self, '提示', '没有数据可以导出')
+            return
+        filename = QFileDialog.getSaveFileName(self, '选择你要保存的文件位置', '/', '*.xls')
+        if not filename or not filename[0]:
+            return
+        headers = ['姓名', '性别', '身份证', '享受月数', '参保时间', '开始发放时间', '结束时间',
+                   '失业', '医疗', '生育', '丧葬', '合计', '村社', '账号', '银行', '项目']
+        tableDatas = []
+        for data in all_data:
+            tableData = [data['name'], data['sex'], data['id'], data['month'], data['canbaoTime'],
+                         data['fafangTime'], data['endTime'], data['shiye'], data['yiliao'],
+                         data['shengyu'], data['shangzhang'], data['total'], data['cunse'], data['zhanghao'],
+                         data['beizhu'], data['item']]
+            tableDatas.append(tableData)
+        ExcelSaver.saveFile(filename[0], headers, tableDatas)
 
+    def expend(self):
+        print('支出')
+
+# 登录窗口
 class LoginBox(QDialog):
     def __init__(self, userDao):
         super().__init__()
@@ -136,7 +192,8 @@ class LoginBox(QDialog):
         self.initUI()
 
     def initUI(self):
-        self.setGeometry(300,300,250,100)
+        self.setGeometry(300,300,200,100)
+        self.setWindowIcon(QIcon('icon.jpg'))
         self.setWindowTitle("登录")
         grid = QGridLayout()
         self.setLayout(grid)
@@ -173,10 +230,24 @@ class LoginBox(QDialog):
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
+# 用户管理窗口
+class UsesrManageBox(QWidget):
+
+    def __init__(self):
+        super().__init__()
+
+    # 将登录窗口移动到中心
+    def center(self):
+        qr = self.frameGeometry()
+        cp = QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     conn = sqlite3.connect('JiuYe.db')
     userDao = UserDao(conn)
-    box = MainUI(userDao)
+    shiYeDetailDao = ShiYeDetailDao(conn)
+    box = MainUI(userDao, shiYeDetailDao)
     app.exit(app.exec_())
