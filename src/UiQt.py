@@ -55,7 +55,10 @@ class MainUI(QWidget):
         self.tableView.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.tableMode = self.buildTable(self.headers, datas)
         self.tableView.setModel(self.tableMode)
-        self.grid.addWidget(self.tableView, 1, 0, 6, 1)
+        self.grid.addWidget(self.tableView, 1, 0, 24, 1)
+        if self.user:
+            userNameLable = QLabel('用户:' + self.user['name'])
+            self.grid.addWidget(userNameLable, 25, 0, 1, 1)
 
         self.insertButton = QPushButton("存储")
         self.insertButton.setDisabled(True)
@@ -74,12 +77,16 @@ class MainUI(QWidget):
         self.zhichuButton.clicked.connect(self.expend)
         self.grid.addWidget(self.zhichuButton, 4, 3, 1, 2)
 
+        self.changePasswdButton = QPushButton("修改密码")
+        self.changePasswdButton.clicked.connect(self.changePassWd)
+        self.grid.addWidget(self.changePasswdButton, 5, 3, 1, 2)
+
         self.userButton = QPushButton("用户管理")
         if self.user and self.user['role'] == Role.ADMIN.value:
             self.userButton.setEnabled(True)
         else:
             self.userButton.setDisabled(True)
-        self.grid.addWidget(self.userButton, 5, 3, 1, 2)
+        self.grid.addWidget(self.userButton, 6, 3, 1, 2)
 
         self.show()
 
@@ -180,6 +187,10 @@ class MainUI(QWidget):
             tableDatas.append(tableData)
         ExcelSaver.saveFile(filename[0], headers, tableDatas)
 
+    def changePassWd(self):
+        passwdChangeBox = PasswdChangeBox()
+        passwdChangeBox.exec_()
+
     def expend(self):
         print('支出')
 
@@ -235,6 +246,53 @@ class UsesrManageBox(QWidget):
 
     def __init__(self):
         super().__init__()
+
+    def initUI(self):
+        self.setGeometry(300, 300, 300, 200)
+        self.setWindowIcon(QIcon('icon.jpg'))
+        self.setWindowTitle("用户管理")
+        grid = QGridLayout()
+        self.setLayout(grid)
+
+        self.show()
+
+    # 将登录窗口移动到中心
+    def center(self):
+        qr = self.frameGeometry()
+        cp = QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
+
+class PasswdChangeBox(QDialog):
+
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+
+
+    def initUI(self):
+        self.setGeometry(300, 300, 300, 200)
+        self.setWindowIcon(QIcon('icon.jpg'))
+        self.setWindowTitle("密码修改")
+        grid = QGridLayout()
+        self.setLayout(grid)
+        self.oldPasswdLabel = QLabel("原密码：")
+        self.oldPasswdLine = QLineEdit()
+        self.newPasswdLabel = QLabel("新密码：")
+        self.newPasswdLine = QLineEdit()
+        self.comfirmPasswdLabel = QLabel("确认密码：")
+        self.comfirmPasswdLine = QLineEdit()
+        self.okButton = QPushButton("确定")
+        grid.addWidget(self.oldPasswdLabel, 0, 0)
+        grid.addWidget(self.oldPasswdLine, 0, 1, 1, 2)
+        grid.addWidget(self.newPasswdLabel, 1, 0)
+        grid.addWidget(self.newPasswdLine, 1, 1, 1, 2)
+        grid.addWidget(self.comfirmPasswdLabel, 2, 0)
+        grid.addWidget(self.comfirmPasswdLine, 2, 1, 1, 2)
+        grid.addWidget(self.okButton, 3, 2, 1, 1)
+
+        self.center()
+        self.show()
 
     # 将登录窗口移动到中心
     def center(self):
