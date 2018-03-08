@@ -1,6 +1,7 @@
 import sys
 import logging
 import sqlite3
+import datetime
 from UserDao import UserDao
 from ShiYeDetailDAO import ShiYeDetailDao
 from PyQt5.QtWidgets import (QFileDialog, QWidget, QDialog, QGridLayout, QPushButton, QLabel, QLineEdit, QDesktopWidget, QMessageBox, QApplication, QTableView, QAbstractItemView)
@@ -9,6 +10,7 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon
 from ExcelParser import ExcelParser
 from ExcelSaver import ExcelSaver
 from role import Role
+from UserManageUi import UserManageBox
 
 class MainUI(QWidget):
 
@@ -81,12 +83,16 @@ class MainUI(QWidget):
         self.changePasswdButton.clicked.connect(self.changePassWd)
         self.grid.addWidget(self.changePasswdButton, 5, 3, 1, 2)
 
+        self.updateDataButton = QPushButton("修改数据")
+        self.grid.addWidget(self.updateDataButton, 6, 3, 1, 2)
+
         self.userButton = QPushButton("用户管理")
         if self.user and self.user['role'] == Role.ADMIN.value:
             self.userButton.setEnabled(True)
         else:
             self.userButton.setDisabled(True)
-        self.grid.addWidget(self.userButton, 6, 3, 1, 2)
+        self.userButton.clicked.connect(self.manageUser)
+        self.grid.addWidget(self.userButton, 7, 3, 1, 2)
 
         self.show()
 
@@ -151,6 +157,7 @@ class MainUI(QWidget):
         else:
             QMessageBox.information(self, '存储完成', '存储完成')
 
+    # 查询数据
     def queryData(self):
         all_data = self.shiYeDetailDao.find_persons()
         if not all_data:
@@ -168,6 +175,7 @@ class MainUI(QWidget):
         tableMode = self.buildTable(headers, tableDatas)
         self.tableView.setModel(tableMode)
 
+    # 导出数据
     def outputFile(self):
         all_data = self.shiYeDetailDao.find_persons()
         if not all_data:
@@ -187,12 +195,34 @@ class MainUI(QWidget):
             tableDatas.append(tableData)
         ExcelSaver.saveFile(filename[0], headers, tableDatas)
 
+    # 修改密码
     def changePassWd(self):
-        passwdChangeBox = PasswdChangeBox()
+        passwdChangeBox = PasswdChangeBox(self.userDao, self.user['name'])
         passwdChangeBox.exec_()
 
+    # 管理用户
+    def manageUser(self):
+        userManageBox = UserManageBox(self.userDao)
+        userManageBox.exec_()
+
+    # 当月支出
     def expend(self):
-        print('支出')
+        all_data = self.shiYeDetailDao.find_persons()
+        if not all_data:
+            QMessageBox.information(self, '提示', '数据库中没有数据，请先导入数据或检查数据库')
+            return
+        now_year = datetime.datetime.year
+        now_month = datetime.datetime.month
+        now_time = str(now_year) + '.' + str(now_month)
+        expendDatas = []
+        for data in all_data:
+            endTime = data['endTime']
+            if float(endTime) >= float(now_time):
+                expendDatas.append(data)
+
+    def updateData(self):
+        print("修改数据")
+
 
 # 登录窗口
 class LoginBox(QDialog):
@@ -241,32 +271,14 @@ class LoginBox(QDialog):
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
-# 用户管理窗口
-class UsesrManageBox(QWidget):
 
-    def __init__(self):
-        super().__init__()
-
-    def initUI(self):
-        self.setGeometry(300, 300, 300, 200)
-        self.setWindowIcon(QIcon('icon.jpg'))
-        self.setWindowTitle("用户管理")
-        grid = QGridLayout()
-        self.setLayout(grid)
-
-        self.show()
-
-    # 将登录窗口移动到中心
-    def center(self):
-        qr = self.frameGeometry()
-        cp = QDesktopWidget().availableGeometry().center()
-        qr.moveCenter(cp)
-        self.move(qr.topLeft())
-
+# 修改密码窗口
 class PasswdChangeBox(QDialog):
 
-    def __init__(self):
+    def __init__(self, userDao, userName):
         super().__init__()
+        self.userDao = userDao
+        self.userName = userName
         self.initUI()
 
 
@@ -278,11 +290,15 @@ class PasswdChangeBox(QDialog):
         self.setLayout(grid)
         self.oldPasswdLabel = QLabel("原密码：")
         self.oldPasswdLine = QLineEdit()
+        self.oldPasswdLine.setEchoMode(QLineEdit.Password)
         self.newPasswdLabel = QLabel("新密码：")
         self.newPasswdLine = QLineEdit()
+        self.newPasswdLine.setEchoMode(QLineEdit.Password)
         self.comfirmPasswdLabel = QLabel("确认密码：")
         self.comfirmPasswdLine = QLineEdit()
+        self.comfirmPasswdLine.setEchoMode(QLineEdit.Password)
         self.okButton = QPushButton("确定")
+        self.okButton.clicked.connect(self.changePasswd)
         grid.addWidget(self.oldPasswdLabel, 0, 0)
         grid.addWidget(self.oldPasswdLine, 0, 1, 1, 2)
         grid.addWidget(self.newPasswdLabel, 1, 0)
@@ -293,6 +309,28 @@ class PasswdChangeBox(QDialog):
 
         self.center()
         self.show()
+
+    def changePasswd(self):
+        if not self.oldPasswdLine.text().strip():
+            QMessageBox.information(self, '提示', '请输入原密码')
+            return
+        if not self.newPasswdLine.text().strip():
+            QMessageBox.information(self, '提示', '请输入新密码')
+            return
+        if not self.comfirmPasswdLine.text().strip():
+            QMessageBox.information(self, '提示', '请再次输入新密码')
+            return
+        if self.newPasswdLine.text() != self.comfirmPasswdLine.text():
+            QMessageBox.information(self, '提示', '两次输入的密码不一致')
+            return
+
+        if self.userDao.modify_user_password(self.userName, self.oldPasswdLine.text().strip(),
+                                             self.newPasswdLine.text().strip()):
+            QMessageBox.information(self, '修改密码', '修改密码成功')
+        else:
+            QMessageBox.information(self, '修改密码', '修改密码失败')
+        self.destroy()
+
 
     # 将登录窗口移动到中心
     def center(self):

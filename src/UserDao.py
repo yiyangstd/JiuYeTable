@@ -71,7 +71,9 @@ class UserDao:
         try:
             cursor.execute("UPDATE user SET password='" + password + "',role='" + role + "' WHERE name='" + name + "'")
             self.conn.commit()
-            return True
+            if self.conn.total_changes > 0:
+                return True
+            return False
         except Exception as e:
             print(e)
             self.conn.rollback()
@@ -80,12 +82,14 @@ class UserDao:
             cursor.close()
 
     #  修改用户密码
-    def modify_user_password(self, name, password):
+    def modify_user_password(self, name, oldpassword, newpassword):
         cursor = self.conn.cursor()
         try:
-            cursor.execute("UPDATE user SET password='" + password + "' WHERE name='" + name + "'")
+            result = cursor.execute("UPDATE user SET password='" + newpassword + "' WHERE name='" + name + "' and password='" + oldpassword + "'")
             self.conn.commit()
-            return True
+            if self.conn.total_changes > 0:
+                return True
+            return False
         except Exception as e:
             print(e)
             self.conn.rollback()
@@ -99,7 +103,9 @@ class UserDao:
         try:
             cursor.execute("UPDATE user SET role='" + role + "' WHERE name='" + name + "'")
             self.conn.commit()
-            return True
+            if self.conn.total_changes > 0:
+                return True
+            return False
         except Exception as e:
             print(e)
             self.conn.rollback()

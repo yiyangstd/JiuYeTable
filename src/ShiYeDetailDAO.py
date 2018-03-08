@@ -104,7 +104,9 @@ class ShiYeDetailDao():
         try:
             cursor.execute(updateSQL)
             self.conn.commit()
-            return True
+            if self.conn.total_changes > 0:
+                return True
+            return False
         except Exception as e:
             print(e)
             self.conn.rollback()
