@@ -211,6 +211,10 @@ class MainUI(QWidget):
         if not all_data:
             QMessageBox.information(self, '提示', '数据库中没有数据，请先导入数据或检查数据库')
             return
+
+        filename = QFileDialog.getSaveFileName(self, '选择你要保存的文件位置', '/', '*.xls')
+        if not filename or not filename[0]:
+            return
         now_year = datetime.datetime.year
         now_month = datetime.datetime.month
         now_time = str(now_year) + '.' + str(now_month)

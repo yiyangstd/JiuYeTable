@@ -24,22 +24,25 @@ class ShiYeDetailDao():
                            "cunse VARCHAR(20), "
                            "zhanghao VARCHAR(50), "
                            "beizhu VARCHAR(30), "
-                           "item VARCHAR(20) )")
+                           "item VARCHAR(20) , "
+                           "stopFlag INT default 0,"
+                           "shengyuFlag INT default 0,"
+                           "shangzhangFlag INT default 0)")
             self.conn.commit()
             cursor.close()
 
     # 添加人员数据
     def add_person(self, name, sex, id, month, canbaoTime, fafangTime, endTime, shiye, yiliao, shengyu, shangzhang,
-                   total, cunse, zhanghao, beizhu, item):
+                   total, cunse, zhanghao, beizhu, item, stopFlag=0):
         cursor = self.conn.cursor()
         try:
             cursor.execute(
                 "INSERT INTO shiye_detail"
                 "(name, sex, id, month, canbaoTime, fafangTime, shiye, yiliao, shengyu, "
-                "shangzhang, total, cunse, zhanghao, beizhu, item, endTime) "
+                "shangzhang, total, cunse, zhanghao, beizhu, item, endTime, stopFlag) "
                 "VALUES('" + str(name) + "','" + str(sex) + "','" + id + "'," + str(month) + ",'" + str(canbaoTime) + "','" +
                 str(fafangTime) + "','" + str(shiye) + "','" + str(yiliao) + "','" + str(shengyu) + "','" + str(shangzhang) + "','" + str(total) + "','" +
-                cunse + "','" + zhanghao + "','" + beizhu + "','" + item + "','" + endTime + "')")
+                cunse + "','" + zhanghao + "','" + beizhu + "','" + item + "','" + endTime + "','" + str(stopFlag) + "')")
             self.conn.commit()
             return True
         except Exception as e:
@@ -66,7 +69,8 @@ class ShiYeDetailDao():
     # 更新一个人员数据
     def update_person_by_id(self, id, newId, name = None, sex = None, month = None, canbaoTime = None, fafangTime = None,
                shiye = None, yiliao = None, shengyu = None, shangzhang = None, total = None, cunse = None,
-               zhanghao = None, beizhu = None, item = None, endTime = None):
+               zhanghao = None, beizhu = None, item = None, endTime = None, stopFlag = None, shengyuFlag = None,
+               shangzhangFlag = None):
         cursor = self.conn.cursor()
         updateSQL = "UPDATE shiye_detail SET "
         if name is not None:
@@ -99,6 +103,12 @@ class ShiYeDetailDao():
             updateSQL = updateSQL + "item='" + item + "',"
         if endTime is not None:
             updateSQL = updateSQL + "endTime='" + item + "',"
+        if stopFlag is not None:
+            updateSQL = updateSQL + "stopFlag=" + str(stopFlag) + ","
+        if shangzhangFlag is not None:
+            updateSQL = updateSQL + "shangzhangFlag=" + str(shangzhangFlag) + ","
+        if shengyuFlag is not None:
+            updateSQL = updateSQL + "shengyuFlag=" + str(shengyuFlag) + ", "
         updateSQL = updateSQL + "id = '" + newId + "' "
         updateSQL = updateSQL + "WHERE id ='" + id + "'"
         try:
@@ -118,7 +128,8 @@ class ShiYeDetailDao():
     def find_by_id(self, id):
         cursor = self.conn.cursor()
         cursor.execute("SELECT name, sex, id, month, canbaoTime, fafangTime, shiye, yiliao, shengyu, "
-                       "shangzhang, total, cunse, zhanghao, beizhu, item, endTime from shiye_detail where "
+                       "shangzhang, total, cunse, zhanghao, beizhu, item, endTime, stopFlag, shangzhangFlag,"
+                       "shengyuFlag from shiye_detail where "
                        "id = '" + id + "'")
         result = cursor.fetchall()
         person = {}
@@ -140,15 +151,20 @@ class ShiYeDetailDao():
             person['beizhu'] = onePerson[13]
             person['item'] = onePerson[14]
             person['endTime'] = onePerson[15]
+            person['stopFlag'] = onePerson[16]
+            person['shangzhangFlag'] = onePerson[17]
+            person['shengyuFlag'] = onePerson[18]
         cursor.close()
         return person
 
     # 查询所有的人员数据
-    def find_persons(self):
+    def find_persons(self, stopFlag = None):
         cursor = self.conn.cursor()
         findSql = "SELECT name, sex, id, month, canbaoTime, fafangTime, shiye, yiliao, shengyu," \
-                  "shangzhang, total, cunse, zhanghao, beizhu, item, endTime from shiye_detail"
+                  "shangzhang, total, cunse, zhanghao, beizhu, item, endTime, stopFlag from shiye_detail"
 
+        if stopFlag:
+            findSql = findSql + "where stopFlag=" + str(stopFlag)
         cursor.execute(findSql)
         result = cursor.fetchall()
         persons = []
@@ -171,6 +187,7 @@ class ShiYeDetailDao():
                 person['beizhu'] = onePerson[13]
                 person['item'] = onePerson[14]
                 person['endTime'] = onePerson[15]
+                person['stopFlag'] = onePerson[16]
                 persons.append(person)
         return persons
 
