@@ -11,6 +11,7 @@ from ExcelParser import ExcelParser
 from ExcelSaver import ExcelSaver
 from role import Role
 from UserManageUi import UserManageBox
+from DataManageUi import DataManageUi
 
 class MainUI(QWidget):
 
@@ -85,6 +86,7 @@ class MainUI(QWidget):
 
         self.updateDataButton = QPushButton("修改数据")
         self.grid.addWidget(self.updateDataButton, 6, 3, 1, 2)
+        self.updateDataButton.clicked.connect(self.manageData)
 
         self.userButton = QPushButton("用户管理")
         if self.user and self.user['role'] == Role.ADMIN.value:
@@ -199,6 +201,10 @@ class MainUI(QWidget):
     def changePassWd(self):
         passwdChangeBox = PasswdChangeBox(self.userDao, self.user['name'])
         passwdChangeBox.exec_()
+
+    def manageData(self):
+        dataManageBox = DataManageUi(self.shiYeDetailDao)
+        dataManageBox.exec_()
 
     # 管理用户
     def manageUser(self):

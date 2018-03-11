@@ -11,6 +11,7 @@ class UserDao:
             cursor.execute("CREATE TABLE user (name varchar(20) primary key, password varchar(20), role varchar(20))")
             cursor.execute("INSERT INTO user(name, password, role) values('admin', '3104794', 'admin')")
             self.conn.commit()
+        cursor.close()
 
     # 新增用户
     def add_user(self, name, password, role):
