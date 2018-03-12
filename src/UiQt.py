@@ -88,13 +88,17 @@ class MainUI(QWidget):
         self.grid.addWidget(self.updateDataButton, 6, 3, 1, 2)
         self.updateDataButton.clicked.connect(self.manageData)
 
+        self.paramButton = QPushButton("参数管理")
+        self.grid.addWidget(self.paramButton, 7, 3, 1, 2)
+        self.paramButton.clicked.connect(self.manageParam)
+
         self.userButton = QPushButton("用户管理")
         if self.user and self.user['role'] == Role.ADMIN.value:
             self.userButton.setEnabled(True)
         else:
             self.userButton.setDisabled(True)
         self.userButton.clicked.connect(self.manageUser)
-        self.grid.addWidget(self.userButton, 7, 3, 1, 2)
+        self.grid.addWidget(self.userButton, 8, 3, 1, 2)
 
         self.show()
 
@@ -206,6 +210,9 @@ class MainUI(QWidget):
         dataManageBox = DataManageUi(self.shiYeDetailDao)
         dataManageBox.exec_()
 
+    def manageParam(self):
+        print("参数管理")
+
     # 管理用户
     def manageUser(self):
         userManageBox = UserManageBox(self.userDao)
@@ -213,7 +220,7 @@ class MainUI(QWidget):
 
     # 当月支出
     def expend(self):
-        all_data = self.shiYeDetailDao.find_persons()
+        all_data = self.shiYeDetailDao.find_persons(stopFlag=0)
         if not all_data:
             QMessageBox.information(self, '提示', '数据库中没有数据，请先导入数据或检查数据库')
             return
@@ -227,11 +234,8 @@ class MainUI(QWidget):
         expendDatas = []
         for data in all_data:
             endTime = data['endTime']
-            if float(endTime) >= float(now_time):
+            if float(endTime) >= float(now_time) and data['stopFlag'] != 1:
                 expendDatas.append(data)
-
-    def updateData(self):
-        print("修改数据")
 
 
 # 登录窗口

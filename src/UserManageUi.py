@@ -16,6 +16,7 @@ class UserManageBox(QDialog):
         grid = QGridLayout()
         self.setLayout(grid)
 
+
         self.show()
 
     # 将登录窗口移动到中心
