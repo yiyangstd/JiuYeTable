@@ -161,7 +161,8 @@ class ShiYeDetailDao():
     def find_persons(self, stopFlag = None):
         cursor = self.conn.cursor()
         findSql = "SELECT name, sex, id, month, canbaoTime, fafangTime, shiye, yiliao, shengyu," \
-                  "shangzhang, total, cunse, zhanghao, beizhu, item, endTime, stopFlag from shiye_detail"
+                  "shangzhang, total, cunse, zhanghao, beizhu, item, endTime, stopFlag, shangzhangFlag," \
+                  " shengyuFlag from shiye_detail"
 
         if stopFlag:
             findSql = findSql + "where stopFlag=" + str(stopFlag)
@@ -188,6 +189,8 @@ class ShiYeDetailDao():
                 person['item'] = onePerson[14]
                 person['endTime'] = onePerson[15]
                 person['stopFlag'] = onePerson[16]
+                person['shangzhangFlag'] = onePerson[17]
+                person['shengyuFlag'] = onePerson[18]
                 persons.append(person)
         return persons
 

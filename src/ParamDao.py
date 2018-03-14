@@ -1,6 +1,6 @@
 import sqlite3
 
-class ParamDao:
+class ParamDao():
 
     def __init__(self, conn):
         super().__init__()

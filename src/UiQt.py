@@ -12,13 +12,16 @@ from ExcelSaver import ExcelSaver
 from role import Role
 from UserManageUi import UserManageBox
 from DataManageUi import DataManageUi
+from ParamDao import ParamDao
+from ExcelSaver import ExcelSaver
 
 class MainUI(QWidget):
 
-    def __init__(self, userDao, shiYeDetailDao):
+    def __init__(self, userDao, shiYeDetailDao, paramDao):
         super().__init__()
         self.userDao = userDao
         self.shiYeDetailDao = shiYeDetailDao
+        self.paramDao = paramDao
         self.user = None
         self.data = None
         self.item = None
@@ -225,17 +228,44 @@ class MainUI(QWidget):
             QMessageBox.information(self, '提示', '数据库中没有数据，请先导入数据或检查数据库')
             return
 
-        filename = QFileDialog.getSaveFileName(self, '选择你要保存的文件位置', '/', '*.xls')
+        # 获得参数
+        param_shiye = float(self.paramDao.getValueByKey('shiye'))
+        param_yiliao = float(self.paramDao.getValueByKey('yiliao'))
+        param_shengyu = float(self.paramDao.getValueByKey('shengyu'))
+        param_shangzhang = float(self.paramDao.getValueByKey('shangzhang'))
+
+        filename, fileType = QFileDialog.getSaveFileName(self, '选择你要保存的文件位置', '/', '*.xls')
+        print(filename)
         if not filename or not filename[0]:
             return
-        now_year = datetime.datetime.year
-        now_month = datetime.datetime.month
+        now_year = datetime.datetime.now().year
+        now_month = datetime.datetime.now().month
         now_time = str(now_year) + '.' + str(now_month)
         expendDatas = []
         for data in all_data:
             endTime = data['endTime']
             if float(endTime) >= float(now_time) and data['stopFlag'] != 1:
-                expendDatas.append(data)
+                print(data)
+                # 计算失业金，丧葬，生育
+                shiye = param_shiye
+                shangzhang = 0
+                shengyu = 0
+                if data['shangzhangFlag'] == int(str(now_year) + str(now_month)):
+                    shangzhang = param_shiye * 20
+                elif data['shangzhangFlag'] < int(str(now_year) + str(now_month)) and data['shangzhangFlag'] != 0:
+                    continue
+                if data['shengyuFlag'] == int(str(now_year) + str(now_month)):
+                    shengyu = shangzhang * 3
+                # 姓名，性别，身份证，享受月份，参保月份，失业金，丧葬，生育，账号, 项目
+                expendDatas.append([data['name'], data['sex'], data['id'],
+                                    data['month'], data['canbaoTime'], shiye, shangzhang, shengyu,
+                                    data['zhanghao'], data['item']])
+
+        if not expendDatas:
+            QMessageBox.information(self, '提示', '本月未有发放，请作进一步检查')
+        else:
+            hearders = ['姓名', '性别', '身份证', '享受月份', '参保时间', '失业', '丧葬', '生育', '账号', '项目']
+            ExcelSaver.saveFile(filename, hearders, expendDatas)
 
 
 # 登录窗口
@@ -359,5 +389,7 @@ if __name__ == '__main__':
     conn = sqlite3.connect('JiuYe.db')
     userDao = UserDao(conn)
     shiYeDetailDao = ShiYeDetailDao(conn)
-    box = MainUI(userDao, shiYeDetailDao)
+    paramDao = ParamDao(conn)
+
+    box = MainUI(userDao, shiYeDetailDao, paramDao)
     app.exit(app.exec_())

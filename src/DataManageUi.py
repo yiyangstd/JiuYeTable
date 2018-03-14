@@ -40,8 +40,10 @@ class DataManageUi(QDialog):
         stopLabel = QLabel("终止发放：")
         self.stop = QCheckBox("终止")
         shengyuLabel = QLabel("生育保险：")
+        self.shengyuFafang = QLabel()
         self.shengyu = QCheckBox("下月发放")
         shangzhangLabel = QLabel("丧葬：")
+        self.shangzhangFafang = QLabel()
         self.shangzhang = QCheckBox("下月发放")
         self.saveButton = QPushButton("保存")
         self.saveButton.setDisabled(True)
@@ -63,8 +65,10 @@ class DataManageUi(QDialog):
         self.grid.addWidget(self.stop, 5, 1)
         self.grid.addWidget(shengyuLabel, 6, 0)
         self.grid.addWidget(self.shengyu, 6, 1)
+        self.grid.addWidget(self.shengyuFafang, 6, 2)
         self.grid.addWidget(shangzhangLabel, 7, 0)
         self.grid.addWidget(self.shangzhang, 7, 1)
+        self.grid.addWidget(self.shangzhangFafang, 7, 2)
         self.grid.addWidget(self.saveButton, 8, 5)
         self.center()
         self.show()
@@ -100,12 +104,20 @@ class DataManageUi(QDialog):
             self.stop.setChecked(True)
         if user['shangzhangFlag'] == self.getNetMonth():
             self.shangzhang.setChecked(True)
+            self.shangzhangFafang.setText('')
+        elif user['shangzhangFlag'] > 0:
+            self.shangzhangFafang.setText(str(user['shangzhangFlag']) + "已经发放")
         else:
             self.shangzhang.setChecked(False)
+            self.shangzhangFafang.setText('')
         if user['shengyuFlag'] == self.getNetMonth():
             self.shengyu.setChecked(True)
+            self.shengyuFafang.setText('')
+        elif user['shengyuFlag'] > 0:
+            self.shengyuFafang.setText(str(user['shengyuFlag']) + "已经发放")
         else:
             self.shengyu.setChecked(False)
+            self.shengyuFafang.setText('')
         if user['id'] and self.id:
             self.saveButton.setEnabled(True)
 
