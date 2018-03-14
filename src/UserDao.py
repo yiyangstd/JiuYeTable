@@ -67,10 +67,14 @@ class UserDao:
         return users
 
     # 修改用户密码和角色
-    def modify_user_password_role(self, name, password, role):
+    def modify_user_password_role(self, name, password, role=None):
         cursor = self.conn.cursor()
         try:
-            cursor.execute("UPDATE user SET password='" + password + "',role='" + role + "' WHERE name='" + name + "'")
+            sql = "UPDATE user SET password='" + str(password) + "'"
+            if role is not None:
+                sql = sql + ",role='" + str(role) + "'"
+            sql = sql + " where name='" + str(name) + "'"
+            cursor.execute(sql)
             self.conn.commit()
             if self.conn.total_changes > 0:
                 return True
